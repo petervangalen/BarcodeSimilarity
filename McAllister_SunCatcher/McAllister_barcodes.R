@@ -10,7 +10,7 @@ library(readxl)
 # Start with a clean slate
 rm(list=ls())
 
-# Load data: refer to a .txt file that contains barcodes, one per line. All barcodes should be the same length.
+# Generate a data frame with barcodes, one per line. All barcodes should be the same length.
 barcodes_tib <- read_excel("BC_sequences.xlsx", sheet = 4, skip = 1)
 barcodes_df <- data.frame(bc = barcodes_tib$`Sequence(5’-3’)`)
 rownames(barcodes_df) <- paste(barcodes_tib$`Oligo ID`, barcodes_tib$`Sequence(5’-3’)`)
