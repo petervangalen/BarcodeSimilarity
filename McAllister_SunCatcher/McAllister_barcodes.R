@@ -11,10 +11,15 @@ library(readxl)
 rm(list=ls())
 
 # Generate a data frame with barcodes, one per line. All barcodes should be the same length.
-barcodes_tib <- read_excel("BC_sequences.xlsx", sheet = 4, skip = 1)
+barcodes_tib <- read_excel("BC sequences.xlsx", sheet = 4, skip = 1)
 barcodes_df <- data.frame(bc = barcodes_tib$`Sequence(5’-3’)`)
 rownames(barcodes_df) <- paste(barcodes_tib$`Oligo ID`, barcodes_tib$`Sequence(5’-3’)`)
 barcodes_df <- barcodes_df[1:(nrow(barcodes_df)-3),,drop = F]
+
+# Alternatively, only test the barcodes that were evaluated by PCR (saved as hamming_subset.pdf for Figure 2b)
+#barcodes_tib <- read_excel("BC sequences.xlsx", sheet = 3, skip = 1)
+#barcodes_df <- data.frame(bc = barcodes_tib$`Sequence(5’-3’)`)
+#rownames(barcodes_df) <- barcodes_tib$`Barcode ID`
 
 # Calculate differences in barcodes
 ind.mat <- expand.grid(1:nrow(barcodes_df),1:nrow(barcodes_df))
