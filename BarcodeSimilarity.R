@@ -1,28 +1,34 @@
-# Peter van Galen, 190710
+# Peter van Galen, 241126
 # This script generates a matrix where the color indicates the number of differences between molecular barcodes.
 
 # Load packages
 library(stringdist)
-library(gplots)
+library(tidyverse)
 
 # Start with a clean slate
 rm(list=ls())
 
 # Load data: refer to a .txt file that contains barcodes, one per line. All barcodes should be the same length.
-barcodes.df <- read.table("/Users/vangalen/Desktop/bcs.txt", sep = "\t", na.strings = "NA", header = F)
+barcodes_df <- read.table("/Users/vangalen/Desktop/bcs.txt", sep = "\t", na.strings = "NA", header = F)
 
 # Calculate differences in barcodes
-ind.mat <- expand.grid(1:nrow(barcodes.df),1:nrow(barcodes.df))
-hamming.mat <- matrix( apply(ind.mat,1,function(x,t1) stringdist(t1[x[1],1], t1[x[2],1], method = c("hamming"), useBytes = F),barcodes.df), ncol = nrow( barcodes.df ), nrow = nrow( barcodes.df ) )
-colnames(hamming.mat) <- barcodes.df[,1]
-rownames(hamming.mat) <- barcodes.df[,1]
+barcodes2_df <- barcodes_df %>% mutate(V1 = paste0(V1, "_", row_number())) %>%
+  mutate(V1 = factor(V1, levels = unique(V1)))
+hamming_tib <- tibble(Var1 = rep(barcodes2_df$V1, times = nrow(barcodes2_df)), Var2 = rep(barcodes2_df$V1, each = nrow(barcodes2_df))) %>%
+  rowwise() %>%
+  mutate(Distance = stringdist(sub("_.*", "", Var1), sub("_.*", "", Var2), method = "hamming")) %>%
+  ungroup()
 
 # Plot
-mycol <- c("darkred", "darkred", "darkred", "orangered", "orangered", "darkgreen", "darkgreen", "forestgreen", "forestgreen", rep("limegreen", (max(hamming.mat)*2-9)))
-heatmap.2(hamming.mat, Rowv = F, Colv = F, dendrogram = "none", col = mycol, trace =  "none", margins = c(10,10), density.info = "none", key.xlab = "Hamming distance")
+ggplot(hamming_tib, aes(x = Var1, y = Var2, fill = Distance)) +
+  geom_tile() +
+  scale_fill_gradientn(colors = c("darkred", "darkred", "orangered", "darkgreen", "forestgreen", rep("limegreen", max(hamming_tib$Distance)-4)),
+    breaks = c(0:max(hamming_tib$Distance)),   
+    guide = "legend") +
+  scale_x_discrete(labels = function(x) sub("_.*", "", x)) +
+  scale_y_discrete(labels = function(x) sub("_.*", "", x)) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title = element_blank(),
+        aspect.ratio = 1)
 
-# Optional: save an image
-#pdf(file = "/Users/vangalen/Desktop/hamming.pdf", height = 6, width = 6) # or
-#png(file = "/Users/vangalen/Desktop/hamming.png", units = "px", height = 1800, width = 1800, res = 300)
-#heatmap.2(hamming.mat, Rowv = F, Colv = F, dendrogram = "none", col = mycol, trace =  "none", margins = c(10,10), density.info = "none", key.xlab = "Hamming distance")
-#dev.off()
